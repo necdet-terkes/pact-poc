@@ -2,7 +2,7 @@ const path = require("path");
 const { PactV3, MatchersV3 } = require("@pact-foundation/pact");
 const { getUser, getUserWithoutId } = require("../src/client");
 
-const { integer, string } = MatchersV3;
+const { integer, string, regex } = MatchersV3;
 
 describe("Consumer Pact - poc-consumer -> poc-provider", () => {
   const provider = new PactV3({
@@ -30,20 +30,23 @@ describe("Consumer Pact - poc-consumer -> poc-provider", () => {
           body: {
             id: integer(1), // numeric id
             name: string("John Doe"), // any string
-            email: string("john.doe@example.com"), // any string
-          },
-        });
+            email: regex(
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/,   // email format
+            "john.doe@example.com"          // example value
+          ),
+        },
+      });
 
       await provider.executeTest(async (mockServer) => {
         const baseUrl = mockServer.url;
 
-        // getUser zaten res.data döndürüyor
         const user = await getUser(1, baseUrl);
 
         expect(user.id).toBe(1);
         expect(typeof user.id).toBe("number");
         expect(typeof user.name).toBe("string");
         expect(typeof user.email).toBe("string");
+        expect(user.email).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
       });
     });
 
