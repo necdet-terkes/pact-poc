@@ -3,7 +3,7 @@ const { Verifier } = require("@pact-foundation/pact");
 const { createApp } = require("../src/server");
 
 let server;
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 const PROVIDER_BASE_URL = `http://localhost:${PORT}`;
 
 describe("Pact Provider Verification", () => {
@@ -21,6 +21,7 @@ describe("Pact Provider Verification", () => {
 
   it("validates the expectations of poc-consumer", async () => {
     const hasBroker = !!process.env.PACT_BROKER_BASE_URL;
+    const isCI = process.env.CI === "true";
 
     const commonOpts = {
       providerBaseUrl: PROVIDER_BASE_URL,
@@ -34,14 +35,19 @@ describe("Pact Provider Verification", () => {
           ...commonOpts,
           pactBrokerUrl: process.env.PACT_BROKER_BASE_URL,
           pactBrokerToken: process.env.PACT_BROKER_TOKEN,
+
           consumerVersionSelectors: [
             {
               branch: process.env.CONSUMER_BRANCH || "main",
               latest: true,
             },
           ],
+
           providerVersion: process.env.PROVIDER_VERSION || "dev",
           providerVersionBranch: process.env.PROVIDER_BRANCH || "local",
+
+          // 🔥 CI'da çalışıyorsak verification sonucunu PactFlow'a publish et
+          publishVerificationResult: isCI,
         }
       : {
           // ✅ Local file mode (no broker env)
