@@ -11,11 +11,15 @@ function createApp() {
       return res.json({
         id: 1,
         name: "John Doe",
-        email: "john.doe@example.com"
+        email: "john.doe@example.com",
       });
     }
 
     return res.status(404).json({ message: "User not found" });
+  });
+
+  app.get("/users", (req, res) => {
+    return res.status(400).json({ message: "userId is required" });
   });
 
   return app;

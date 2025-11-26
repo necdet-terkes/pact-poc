@@ -1,6 +1,8 @@
 const path = require("path");
-const { PactV3 } = require("@pact-foundation/pact");
-const { getUser } = require("../src/client");
+const { PactV3, MatchersV3 } = require("@pact-foundation/pact");
+const { getUser, getUserWithoutId } = require("../src/client");
+
+const { integer, string } = MatchersV3;
 
 describe("Consumer Pact - poc-consumer -> poc-provider", () => {
   const provider = new PactV3({
@@ -11,8 +13,7 @@ describe("Consumer Pact - poc-consumer -> poc-provider", () => {
   });
 
   describe("GET /users/:id", () => {
-    it("returns the user data", async () => {
-      // Interaction tanımı (V3 API)
+    it("returns the user data when the user exists", async () => {
       provider
         .given("user with id 1 exists")
         .uponReceiving("a request for user 1")
@@ -27,20 +28,84 @@ describe("Consumer Pact - poc-consumer -> poc-provider", () => {
             "Content-Type": "application/json; charset=utf-8",
           },
           body: {
-            id: 1,
-            name: "John Doe",
-            email: "john.doe@example.com",
+            id: integer(1), // numeric id
+            name: string("John Doe"), // any string
+            email: string("john.doe@example.com"), // any string
           },
         });
 
-      // executeTest mock server'ı ayağa kaldırıyor, test bitince otomatik stop + pact dosyası yazıyor
       await provider.executeTest(async (mockServer) => {
-        const baseUrl = mockServer.url; // Örn: http://127.0.0.1:1234
+        const baseUrl = mockServer.url;
 
+        // getUser zaten res.data döndürüyor
         const user = await getUser(1, baseUrl);
 
         expect(user.id).toBe(1);
-        expect(user.name).toBe("John Doe");
+        expect(typeof user.id).toBe("number");
+        expect(typeof user.name).toBe("string");
+        expect(typeof user.email).toBe("string");
+      });
+    });
+
+    it("returns 404 when the user does not exist", async () => {
+      provider
+        .given("user with id 999 does not exist")
+        .uponReceiving("a request for a non-existing user")
+        .withRequest({
+          method: "GET",
+          path: "/users/999",
+          headers: { Accept: "application/json" },
+        })
+        .willRespondWith({
+          status: 404,
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+          },
+          body: {
+            message: string("User not found"),
+          },
+        });
+
+      await provider.executeTest(async (mockServer) => {
+        const baseUrl = mockServer.url;
+
+        await expect(getUser(999, baseUrl)).rejects.toMatchObject({
+          response: {
+            status: 404,
+            data: { message: "User not found" },
+          },
+        });
+      });
+    });
+
+    it("returns 400 when user id is missing", async () => {
+      provider
+        .given("no user id is provided")
+        .uponReceiving("a request for a user without id")
+        .withRequest({
+          method: "GET",
+          path: "/users",
+          headers: { Accept: "application/json" },
+        })
+        .willRespondWith({
+          status: 400,
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+          },
+          body: {
+            message: string("userId is required"),
+          },
+        });
+
+      await provider.executeTest(async (mockServer) => {
+        const baseUrl = mockServer.url;
+
+        await expect(getUserWithoutId(baseUrl)).rejects.toMatchObject({
+          response: {
+            status: 400,
+            data: { message: "userId is required" },
+          },
+        });
       });
     });
   });

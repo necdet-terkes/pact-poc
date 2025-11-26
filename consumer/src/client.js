@@ -7,9 +7,16 @@ const axios = require("axios");
 async function getUser(id, baseUrl) {
   const url = `${baseUrl}/users/${id}`;
   const res = await axios.get(url, {
-    headers: { Accept: "application/json" }
+    headers: { Accept: "application/json" },
   });
   return res.data;
 }
 
-module.exports = { getUser };
+async function getUserWithoutId(baseUrl) {
+  const url = `${baseUrl}/users`;
+  return axios.get(url, {
+    headers: { Accept: "application/json" },
+  });
+}
+
+module.exports = { getUser, getUserWithoutId };
