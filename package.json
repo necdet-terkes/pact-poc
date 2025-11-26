@@ -1,0 +1,14 @@
+{
+  "name": "pact-poc",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "consumer",
+    "provider"
+  ],
+  "scripts": {
+    "test": "npm run test --workspace consumer && npm run test --workspace provider",
+    "test:consumer": "npm run test --workspace consumer",
+    "test:provider": "npm run test --workspace provider"
+  }
+}

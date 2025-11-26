@@ -1,0 +1,15 @@
+{
+  "name": "pact-poc-consumer",
+  "version": "1.0.0",
+  "main": "src/client.js",
+  "scripts": {
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "axios": "^1.7.0"
+  },
+  "devDependencies": {
+    "@pact-foundation/pact": "^16.0.2",
+    "jest": "^29.7.0"
+  }
+}

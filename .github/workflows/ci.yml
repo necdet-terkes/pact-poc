@@ -1,0 +1,51 @@
+name: CI - Pact PoC
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test-and-pact:
+    runs-on: ubuntu-latest
+
+    env:
+      PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }} # Pactflow URL
+      PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}       # Pactflow API token
+      GIT_SHA: ${{ github.sha }}
+      GIT_BRANCH: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps (monorepo)
+        run: npm install
+
+      # 1) Consumer testleri (Pact generate)
+      - name: Run consumer tests
+        run: npm run test:consumer
+
+      # 2) Publish pacts to Pactflow (sadece main ya da istersen her branch'te)
+      - name: Publish pacts to Pactflow
+        if: github.ref == 'refs/heads/main'
+        run: |
+          npx pact-broker publish consumer/pacts \
+            --broker-base-url="$PACT_BROKER_BASE_URL" \
+            --broker-token="$PACT_BROKER_TOKEN" \
+            --consumer-app-version="$GIT_SHA" \
+            --branch="$GIT_BRANCH"
+
+      # 3) Provider verification (Pactflow'dan kontratı çek)
+      - name: Run provider verification tests
+        env:
+          PROVIDER_VERSION: ${{ github.sha }}
+          PROVIDER_BRANCH: ${{ github.ref_name }}
+          CONSUMER_BRANCH: "main"
+        run: npm run test:provider
