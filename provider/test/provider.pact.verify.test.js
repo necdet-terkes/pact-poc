@@ -31,7 +31,7 @@ describe("Pact Provider Verification", () => {
 
     const opts = hasBroker
       ? {
-          // ✅ PactFlow / broker mode
+          // PactFlow / broker mode
           ...commonOpts,
           pactBrokerUrl: process.env.PACT_BROKER_BASE_URL,
           pactBrokerToken: process.env.PACT_BROKER_TOKEN,
@@ -46,11 +46,11 @@ describe("Pact Provider Verification", () => {
           providerVersion: process.env.PROVIDER_VERSION || "dev",
           providerVersionBranch: process.env.PROVIDER_BRANCH || "local",
 
-          // 🔥 CI'da çalışıyorsak verification sonucunu PactFlow'a publish et
+          // Publish verification result to PactFlow in CI
           publishVerificationResult: isCI,
         }
       : {
-          // ✅ Local file mode (no broker env)
+          // Local file mode (no broker env)
           ...commonOpts,
           pactUrls: [
             path.resolve(

@@ -6,7 +6,6 @@ function createApp() {
   app.get("/users/:id", (req, res) => {
     const id = Number(req.params.id);
 
-    // Hard-coded data for the PoC
     if (id === 1) {
       return res.json({
         id: 1,
@@ -25,7 +24,6 @@ function createApp() {
   return app;
 }
 
-// Start server only if this file is run directly
 if (require.main === module) {
   const app = createApp();
   const port = process.env.PORT || 8080;
