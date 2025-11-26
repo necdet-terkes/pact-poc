@@ -1,4 +1,4 @@
-name: CI - Pact PoC
+name: Consumer CI
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  test-and-pact:
+  consumer-tests-and-publish:
     runs-on: ubuntu-latest
 
     env:
@@ -25,12 +25,10 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - name: Install deps
+      - name: Install deps (monorepo)
         run: npm install
 
-      # -------------------------------
-      # Install Pact CLI (standalone)
-      # -------------------------------
+      # Pact CLI (standalone) kur
       - name: Install Pact CLI
         run: |
           mkdir -p $HOME/pact
@@ -38,10 +36,12 @@ jobs:
           tar -xzf pact-1.88.82-linux-x86_64.tar.gz -C $HOME/pact
           echo "$HOME/pact/pact/bin" >> $GITHUB_PATH
 
+      # Consumer testleri → pact dosyası üretir (consumer/pacts)
       - name: Run consumer tests
         run: npm run test:consumer
 
-      - name: Publish pacts to Pactflow
+      # Sadece main branch'ten PactFlow'a publish et
+      - name: Publish pacts to PactFlow
         if: github.ref == 'refs/heads/main'
         run: |
           pact-broker publish consumer/pacts \
@@ -49,10 +49,3 @@ jobs:
             --branch="$GIT_BRANCH" \
             --broker-base-url="$PACT_BROKER_BASE_URL" \
             --broker-token="$PACT_BROKER_TOKEN"
-
-      - name: Run provider verification tests
-        env:
-          PROVIDER_VERSION: ${{ github.sha }}
-          PROVIDER_BRANCH: ${{ github.ref_name }}
-          CONSUMER_BRANCH: "main"
-        run: npm run test:provider
