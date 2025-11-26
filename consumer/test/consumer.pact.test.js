@@ -28,14 +28,11 @@ describe("Consumer Pact - poc-consumer -> poc-provider", () => {
             "Content-Type": "application/json; charset=utf-8",
           },
           body: {
-            id: integer(1), // numeric id
-            name: string("John Doe"), // any string
-            email: regex(
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/,   // email format
-            "john.doe@example.com"          // example value
-          ),
-        },
-      });
+            id: integer(1),
+            name: string("John Doe"),
+            email: regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "john.doe@example.com"),
+          },
+        });
 
       await provider.executeTest(async (mockServer) => {
         const baseUrl = mockServer.url;

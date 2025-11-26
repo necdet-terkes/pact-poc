@@ -26,7 +26,7 @@ describe("Pact Provider Verification", () => {
       provider: "poc-provider",
       logLevel: "info",
 
-      // 🔗 Her zaman PactFlow üzerinden kontrat oku
+      // Always pull contracts from PactFlow
       pactBrokerUrl: process.env.PACT_BROKER_BASE_URL,
       pactBrokerToken: process.env.PACT_BROKER_TOKEN,
 
@@ -40,7 +40,7 @@ describe("Pact Provider Verification", () => {
       providerVersion: process.env.PROVIDER_VERSION || "dev",
       providerVersionBranch: process.env.PROVIDER_BRANCH || "local",
 
-      // ✅ CI'da verification sonucunu PactFlow'a publish et
+      // Publish verification results to PactFlow in CI
       publishVerificationResult: isCI,
     };
 
