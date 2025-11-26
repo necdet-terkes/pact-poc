@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }} # Pactflow URL
-      PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}       # Pactflow API token
+      PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+      PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
       GIT_SHA: ${{ github.sha }}
       GIT_BRANCH: ${{ github.ref_name }}
 
@@ -25,24 +25,31 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - name: Install deps (monorepo)
+      - name: Install deps
         run: npm install
 
-      # 1) Consumer testleri (Pact generate)
+      # -------------------------------
+      # Install Pact CLI (standalone)
+      # -------------------------------
+      - name: Install Pact CLI
+        run: |
+          mkdir -p $HOME/pact
+          curl -LO https://github.com/pact-foundation/pact-ruby-standalone/releases/download/v1.88.82/pact-1.88.82-linux-x86_64.tar.gz
+          tar -xzf pact-1.88.82-linux-x86_64.tar.gz -C $HOME/pact
+          echo "$HOME/pact/pact/bin" >> $GITHUB_PATH
+
       - name: Run consumer tests
         run: npm run test:consumer
 
-      # 2) Publish pacts to Pactflow (sadece main ya da istersen her branch'te)
       - name: Publish pacts to Pactflow
         if: github.ref == 'refs/heads/main'
         run: |
-          npx pact-broker publish consumer/pacts \
-            --broker-base-url="$PACT_BROKER_BASE_URL" \
-            --broker-token="$PACT_BROKER_TOKEN" \
+          pact-broker publish consumer/pacts \
             --consumer-app-version="$GIT_SHA" \
-            --branch="$GIT_BRANCH"
+            --branch="$GIT_BRANCH" \
+            --broker-base-url="$PACT_BROKER_BASE_URL" \
+            --broker-token="$PACT_BROKER_TOKEN"
 
-      # 3) Provider verification (Pactflow'dan kontratı çek)
       - name: Run provider verification tests
         env:
           PROVIDER_VERSION: ${{ github.sha }}
